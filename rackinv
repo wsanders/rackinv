@@ -1,0 +1,89 @@
+#!/usr/local/bin/python
+
+import sys
+import time
+
+def usage():
+    print '''
+rackinv - The Visio Hater's Config Management Tool
+
+usage: ./rackinv < input > output
+
+input: 2 lines of free text header, followed by any number of lines with two
+    white-space delimited fields. Each line describes a device in the rack
+    (use "E" for empty space). Field 1 is the number of U, Field 2 is a free
+    text description up to 30 chars. Order from top to bottom.
+
+output: A pretty printed ASCII art rack diagram!
+
+flags: -html encapsulates the output in <pre> HTML tags. 
+       -usage prints this message
+
+sample input file:
+HEADER DATA LINE 1: sample data
+HEADER DATA Line 2: This rack has 26 Total U
+8  E
+3   Foo
+1   Bar
+2   Baz
+4   Barney
+8  E
+'''
+    sys.exit()
+    
+
+totalU = 0
+divider = 1
+tag = ''
+u = 0
+totalu = 0
+rackart = []
+html = 0
+if len(sys.argv) > 1:
+    if sys.argv[1] == '-html': html = 1
+    else:
+        usage()
+
+lines = sys.stdin.readlines()
+h1 = lines[0].strip()
+h2 = lines[1].strip()
+for l in lines[2:]:
+    l = l.strip()
+    if len(l) > 3:
+        u, tag = l.split(None,1)
+        u = int(u)
+        totalu = totalu + u
+        while u > 0:
+            rackart.append(tag)
+            u = u - 1
+            
+if html:
+    print "<html> <head> <title> {} </title> </head> <body> <pre>".format(h1) 
+print
+print "{:^60}".format(h1)
+print "{:^60}".format(h2)
+print "{:^60}".format(time.strftime('%c',time.localtime()))
+print "{:^60}".format(str(totalu) + " TOTAL U")
+print
+print ' '*9 + '+' + '-'*40 + '+'
+
+for i in range(len(rackart) - 1):
+    if rackart[i] == rackart[i+1]:
+       l = '|' + "{:^40}".format(rackart[i]) + '|'
+    else:
+        rackart[i] = '  ' + rackart[i] + '  '
+        if len(rackart[i]) % 2 == 0:
+            # if rackart has even chars
+            j = 20 - len(rackart[i]) / 2
+            l = '|' + '_'*j + rackart[i] + '_'*j + '|' 
+        else:
+            # if rackiart[i] has odd chars
+            j = 20 - len(rackart[i]) / 2
+            l = '|' + '_'*(j-1) + rackart[i] + '_'*j + '|'
+    print "{:^60}".format(l)
+l ='|' + "{:^40}".format(rackart[len(rackart)-1]) + '|'
+print "{:^60}".format(l)
+print ' '*9 + '+' + '-'*40 + '+'
+if html:
+    print "</body> </html>"    
+    
